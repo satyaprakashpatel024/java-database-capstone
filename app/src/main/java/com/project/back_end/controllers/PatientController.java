@@ -3,7 +3,7 @@ package com.project.back_end.controllers;
 import com.project.back_end.DTO.Login;
 import com.project.back_end.models.Patient;
 import com.project.back_end.services.PatientService;
-import com.project.back_end.services.Service;
+import com.project.back_end.services.CommonService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,11 +26,11 @@ public class PatientController {
     private PatientService patientService;
 
     @Autowired
-    private Service service;
+    private CommonService commonService;
 
     @GetMapping("/{token}")
     public ResponseEntity<Map<String, Object>> getPatient(@PathVariable String token) {
-        ResponseEntity<Map<String, String>> tokenValidation = service.validateToken(token, "patient");
+        ResponseEntity<Map<String, String>> tokenValidation = commonService.validateToken(token, "patient");
         if (tokenValidation != null) {
             Map<String, Object> response = new HashMap<>();
             response.putAll(tokenValidation.getBody());
@@ -44,7 +44,7 @@ public class PatientController {
     public ResponseEntity<Map<String, String>> createPatient(@Validated @RequestBody Patient patient) {
         Map<String, String> response = new HashMap<>();
 
-        boolean isValid = service.validatePatient(patient);
+        boolean isValid = commonService.validatePatient(patient);
         if (!isValid) {
             response.put("message", "Patient with email id or phone no already exist");
             return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
@@ -62,7 +62,7 @@ public class PatientController {
 
     @PostMapping("/login")
     public ResponseEntity<Map<String, String>> login(@RequestBody Login login) {
-        return service.validatePatientLogin(login);
+        return commonService.validatePatientLogin(login);
     }
 
     @GetMapping("/{id}/{token}")
@@ -70,7 +70,7 @@ public class PatientController {
             @PathVariable Long id,
             @PathVariable String token
     ) {
-        ResponseEntity<Map<String, String>> tokenValidation = service.validateToken(token, "patient");
+        ResponseEntity<Map<String, String>> tokenValidation = commonService.validateToken(token, "patient");
         if (tokenValidation != null) {
             Map<String, Object> response = new HashMap<>();
             response.putAll(tokenValidation.getBody());
@@ -86,13 +86,13 @@ public class PatientController {
             @PathVariable String name,
             @PathVariable String token
     ) {
-        ResponseEntity<Map<String, String>> tokenValidation = service.validateToken(token, "patient");
+        ResponseEntity<Map<String, String>> tokenValidation = commonService.validateToken(token, "patient");
         if (tokenValidation != null) {
             Map<String, Object> response = new HashMap<>();
             response.putAll(tokenValidation.getBody());
             return ResponseEntity.status(tokenValidation.getStatusCode()).body(response);
         }
 
-        return service.filterPatient(condition, name, token);
+        return commonService.filterPatient(condition, name, token);
     }
 }

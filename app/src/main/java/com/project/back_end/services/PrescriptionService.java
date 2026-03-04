@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -21,7 +22,7 @@ public class PrescriptionService {
     public ResponseEntity<Map<String, String>> savePrescription(Prescription prescription) {
         Map<String, String> response = new HashMap<>();
         try {
-            Prescription existingPrescription = prescriptionRepository.findByAppointmentId(prescription.getAppointmentId());
+            List<Prescription> existingPrescription = prescriptionRepository.findByAppointmentId(prescription.getAppointmentId());
             if (existingPrescription != null) {
                 response.put("message", "Prescription already exists for this appointment");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
@@ -39,7 +40,7 @@ public class PrescriptionService {
     public ResponseEntity<Map<String, Object>> getPrescription(Long appointmentId) {
         Map<String, Object> response = new HashMap<>();
         try {
-            Prescription prescription = prescriptionRepository.findByAppointmentId(appointmentId);
+            List<Prescription> prescription = prescriptionRepository.findByAppointmentId(appointmentId);
             if (prescription == null) {
                 response.put("message", "Prescription not found");
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);

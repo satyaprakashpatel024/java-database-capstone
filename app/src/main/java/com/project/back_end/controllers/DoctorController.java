@@ -2,8 +2,8 @@ package com.project.back_end.controllers;
 
 import com.project.back_end.DTO.Login;
 import com.project.back_end.models.Doctor;
+import com.project.back_end.services.CommonService;
 import com.project.back_end.services.DoctorService;
-import com.project.back_end.services.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -29,7 +29,7 @@ public class DoctorController {
     private DoctorService doctorService;
 
     @Autowired
-    private Service service;
+    private CommonService commonService;
 
     @GetMapping("/availability/{user}/{doctorId}/{date}/{token}")
     public ResponseEntity<Map<String, Object>> getDoctorAvailability(
@@ -38,7 +38,7 @@ public class DoctorController {
             @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @PathVariable String token
     ) {
-        ResponseEntity<Map<String, String>> tokenValidation = service.validateToken(token, user);
+        ResponseEntity<Map<String, String>> tokenValidation = commonService.validateToken(token, user);
         if (tokenValidation != null) {
             Map<String, Object> response = new HashMap<>();
             response.putAll(tokenValidation.getBody());
@@ -62,7 +62,7 @@ public class DoctorController {
             @RequestBody Doctor doctor,
             @PathVariable String token
     ) {
-        ResponseEntity<Map<String, String>> tokenValidation = service.validateToken(token, "admin");
+        ResponseEntity<Map<String, String>> tokenValidation = commonService.validateToken(token, "admin");
         if (tokenValidation != null) {
             return tokenValidation;
         }
@@ -93,7 +93,7 @@ public class DoctorController {
             @RequestBody Doctor doctor,
             @PathVariable String token
     ) {
-        ResponseEntity<Map<String, String>> tokenValidation = service.validateToken(token, "admin");
+        ResponseEntity<Map<String, String>> tokenValidation = commonService.validateToken(token, "admin");
         if (tokenValidation != null) {
             return tokenValidation;
         }
@@ -119,7 +119,7 @@ public class DoctorController {
             @PathVariable long id,
             @PathVariable String token
     ) {
-        ResponseEntity<Map<String, String>> tokenValidation = service.validateToken(token, "admin");
+        ResponseEntity<Map<String, String>> tokenValidation = commonService.validateToken(token, "admin");
         if (tokenValidation != null) {
             return tokenValidation;
         }
@@ -141,11 +141,7 @@ public class DoctorController {
     }
 
     @GetMapping("/filter/{name}/{time}/{speciality}")
-    public ResponseEntity<Map<String, Object>> filter(
-            @PathVariable String name,
-            @PathVariable String time,
-            @PathVariable String speciality
-    ) {
-        return ResponseEntity.ok(service.filterDoctor(name, speciality, time));
+    public ResponseEntity<Map<String, Object>> filter(@PathVariable String name, @PathVariable String time, @PathVariable String speciality) {
+        return ResponseEntity.ok(commonService.filterDoctor(name, speciality, time));
     }
 }

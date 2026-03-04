@@ -10,16 +10,18 @@ import com.project.back_end.repo.DoctorRepository;
 import com.project.back_end.repo.PatientRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-@org.springframework.stereotype.Service
-public class Service {
+@Service
+public class CommonService {
 
     private final TokenService tokenService;
     private final AdminRepository adminRepository;
@@ -28,7 +30,7 @@ public class Service {
     private final DoctorService doctorService;
     private final PatientService patientService;
 
-    public Service(
+    public CommonService(
             TokenService tokenService,
             AdminRepository adminRepository,
             DoctorRepository doctorRepository,
@@ -52,6 +54,16 @@ public class Service {
         }
         return null;
     }
+
+//    public ResponseEntity<Map<String, String>> validateToken(String token, String user) {
+//        Map<String, String> response = new HashMap<>();
+//        if (!tokenService.validateToken(token, user)) {
+//            response.put("message", "Invalid or expired token");
+//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+//        }
+//        response.put("message", "Token valid");
+//        return ResponseEntity.ok(response);  // Return success instead of null
+//    }
 
     public ResponseEntity<Map<String, String>> validateAdmin(Admin receivedAdmin) {
         Map<String, String> response = new HashMap<>();
@@ -79,7 +91,7 @@ public class Service {
         boolean hasTime = time != null && !time.isBlank();
 
         if (hasName && hasSpecialty && hasTime) {
-            doctors = doctorService.filterDoctorsByNameSpecilityandTime(name, specialty, time);
+            doctors = doctorService.filterDoctorsByNameSpecilityAndTime(name, specialty, time);
         } else if (hasName && hasSpecialty) {
             doctors = doctorService.filterDoctorByNameAndSpecility(name, specialty);
         } else if (hasName && hasTime) {
@@ -127,7 +139,7 @@ public class Service {
     public ResponseEntity<Map<String, String>> validatePatientLogin(Login login) {
         Map<String, String> response = new HashMap<>();
         try {
-            Patient patient = patientRepository.findByEmail(login.getEmail());
+            Patient patient = patientRepository.findByEmail(login.getIdentifier());
             if (patient == null || !patient.getPassword().equals(login.getPassword())) {
                 response.put("message", "Invalid email or password");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
@@ -141,22 +153,19 @@ public class Service {
         }
     }
 
-    public ResponseEntity<Map<String, Object>> filterPatient(String condition, String name, String token) {
+    public ResponseEntity<Map<String, Object>> filterPatient(String condition, String pName, String token) {
         Map<String, Object> response = new HashMap<>();
         try {
             String email = tokenService.extractEmail(token);
             boolean hasCondition = condition != null && !condition.isBlank();
-            boolean hasDoctor = name != null && !name.isBlank();
 
-            Object appointments;
-            if (hasCondition && hasDoctor) {
-                appointments = patientService.filterByDoctorAndCondition(email, name, condition);
+            Map<String, Object> appointments = null;
+            if (hasCondition) {
+//                appointments = patientService.filterByDoctorAndCondition(condition,email, patientId);
             } else if (hasCondition) {
-                appointments = patientService.filterByCondition(email, condition);
-            } else if (hasDoctor) {
-                appointments = patientService.filterByDoctor(email, name);
+//                appointments = patientService.filterByCondition( condition,patientId);
             } else {
-                appointments = patientService.getPatientAppointments(email);
+//                appointments = patientService.getPatientAppointments(email);
             }
 
             response.put("appointments", appointments);
@@ -165,5 +174,29 @@ public class Service {
             response.put("message", "An error occurred while filtering patient appointments");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
+    }
+
+    public int validateAppointment(Long doctorId, LocalDateTime appointmentDateTime) {
+        if (doctorId == null) {
+            throw new IllegalArgumentException("Invalid doctor id");
+        }
+        Doctor doctor = doctorRepository.findById(doctorId).orElse(null);
+        if (doctor == null) {
+            return -1;
+        }
+        List<String> doctorAvailability = doctorService.getDoctorAvailability(doctorId, appointmentDateTime.toLocalDate());
+        LocalTime time = appointmentDateTime.toLocalTime();
+        LocalTime appointmentTime = appointmentDateTime.toLocalTime();
+
+        boolean isAvailable = doctorAvailability.stream()
+                .anyMatch(availability -> {
+                    String[] times = availability.split("-");
+                    LocalTime start = LocalTime.parse(times[0].trim());
+                    LocalTime end = LocalTime.parse(times[1].trim());
+
+                    return !appointmentTime.isBefore(start)
+                            && !appointmentTime.isAfter(end);
+                });
+        return isAvailable ? 1 : 0;
     }
 }

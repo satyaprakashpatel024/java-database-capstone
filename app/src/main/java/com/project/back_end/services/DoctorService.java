@@ -43,6 +43,8 @@ public class DoctorService {
             return List.of();
         }
 
+        System.out.println("Doctor ID: " + doctor);
+
         LocalDateTime start = date.atStartOfDay();
         LocalDateTime end = date.plusDays(1).atStartOfDay();
 
@@ -54,7 +56,6 @@ public class DoctorService {
                 .map(LocalDateTime::toLocalTime)
                 .map(time -> time.withSecond(0).withNano(0).toString())
                 .toList();
-
         return doctor.getAvailableTimes().stream()
                 .filter(slot -> !bookedSlots.contains(slot))
                 .toList();
@@ -105,8 +106,10 @@ public class DoctorService {
 
     public ResponseEntity<Map<String, String>> validateDoctor(Login login) {
         Map<String, String> response = new HashMap<>();
+        System.out.println("Login attempt: " + login.getIdentifier() + ", password: " + login.getPassword());
         try {
-            Doctor doctor = doctorRepository.findByEmail(login.getEmail());
+            Doctor doctor = doctorRepository.findByEmail(login.getIdentifier());
+            System.out.println("Doctor found: " + doctor.getEmail()+", password: "+doctor.getPassword());
             if (doctor == null || !doctor.getPassword().equals(login.getPassword())) {
                 response.put("message", "Invalid email or password");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
@@ -123,59 +126,53 @@ public class DoctorService {
     }
 
     @Transactional
-    public Map<String, Object> findDoctorByName(String name) {
-        Map<String, Object> response = new HashMap<>();
-        response.put("doctors", doctorRepository.findByNameLike(name));
-        return response;
+    public List<Doctor> findDoctorByName(String name) {
+        return doctorRepository.findByNameLike(name);
     }
 
     @Transactional
-    public Map<String, Object> filterDoctorsByNameSpecilityandTime(String name, String specialty, String amOrPm) {
+    public List<Doctor> filterDoctorsByNameSpecilityAndTime(String name, String specialty, String amOrPm) {
         List<Doctor> doctors = doctorRepository.findByNameContainingIgnoreCaseAndSpecialtyIgnoreCase(name, specialty);
-        Map<String, Object> response = new HashMap<>();
-        response.put("doctors", filterDoctorByTime(doctors, amOrPm));
-        return response;
+        return filterDoctorByTime(doctors, amOrPm);
     }
 
     @Transactional
-    public Map<String, Object> filterDoctorByNameAndTime(String name, String amOrPm) {
+    public List<Doctor> filterDoctorByNameAndTime(String name, String amOrPm) {
         List<Doctor> doctors = doctorRepository.findByNameLike(name);
-        Map<String, Object> response = new HashMap<>();
-        response.put("doctors", filterDoctorByTime(doctors, amOrPm));
-        return response;
+        return filterDoctorByTime(doctors, amOrPm);
     }
 
     @Transactional
-    public Map<String, Object> filterDoctorByNameAndSpecility(String name, String specilty) {
-        Map<String, Object> response = new HashMap<>();
-        response.put("doctors", doctorRepository.findByNameContainingIgnoreCaseAndSpecialtyIgnoreCase(name, specilty));
-        return response;
+    public List<Doctor> filterDoctorByNameAndSpecility(String name, String specilty) {
+
+        return doctorRepository.findByNameContainingIgnoreCaseAndSpecialtyIgnoreCase(name, specilty);
+
     }
 
     @Transactional
-    public Map<String, Object> filterDoctorByTimeAndSpecility(String specilty, String amOrPm) {
+    public List<Doctor> filterDoctorByTimeAndSpecility(String specilty, String amOrPm) {
         List<Doctor> doctors = doctorRepository.findBySpecialtyIgnoreCase(specilty);
-        Map<String, Object> response = new HashMap<>();
-        response.put("doctors", filterDoctorByTime(doctors, amOrPm));
-        return response;
+
+        return filterDoctorByTime(doctors, amOrPm);
+
     }
 
     @Transactional
-    public Map<String, Object> filterDoctorBySpecility(String specilty) {
-        Map<String, Object> response = new HashMap<>();
-        response.put("doctors", doctorRepository.findBySpecialtyIgnoreCase(specilty));
-        return response;
+    public List<Doctor> filterDoctorBySpecility(String specilty) {
+
+        return doctorRepository.findBySpecialtyIgnoreCase(specilty);
+
     }
 
     @Transactional
-    public Map<String, Object> filterDoctorsByTime(String amOrPm) {
+    public List<Doctor> filterDoctorsByTime(String amOrPm) {
         List<Doctor> doctors = doctorRepository.findAll();
-        Map<String, Object> response = new HashMap<>();
-        response.put("doctors", filterDoctorByTime(doctors, amOrPm));
-        return response;
+
+        return filterDoctorByTime(doctors, amOrPm);
+
     }
 
-    private List<Doctor> filterDoctorByTime(List<Doctor> doctors, String amOrPm) {
+    public List<Doctor> filterDoctorByTime(List<Doctor> doctors, String amOrPm) {
         if (doctors == null || doctors.isEmpty()) {
             return List.of();
         }
@@ -196,7 +193,7 @@ public class DoctorService {
                     } catch (Exception e) {
                         return false;
                     }
-                    return isAmFilter ? parsedTime.isBefore(LocalTime.NOON) : !parsedTime.isBefore(LocalTime.NOON);
+                    return isAmFilter == parsedTime.isBefore(LocalTime.NOON);
                 }))
                 .collect(Collectors.toList());
     }

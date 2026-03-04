@@ -49,15 +49,15 @@ window.adminLoginHandler = async function adminLoginHandler() {
 window.doctorLoginHandler = async function doctorLoginHandler() {
   const email = document.getElementById('email')?.value?.trim();
   const password = document.getElementById('password')?.value;
-  const doctor = { email, password };
-
+  const doctor = { identifier:email, password };
+  console.log('Doctor login attempt:', doctor);
   try {
     const response = await fetch(DOCTOR_API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(doctor)
     });
-
+    console.log('Doctor login response:', response);
     if (!response.ok) {
       alert('Invalid credentials!');
       return;

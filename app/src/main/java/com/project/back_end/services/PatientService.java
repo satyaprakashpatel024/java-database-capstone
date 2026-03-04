@@ -69,7 +69,7 @@ public class PatientService {
     }
 
     @Transactional(readOnly = true)
-    public ResponseEntity<Map<String, Object>> filterByCondition(String condition, Long id) {
+    public ResponseEntity<Map<String, Object>> filterByCondition(String condition, Long patientId) {
         try {
             Integer status = mapConditionToStatus(condition);
             if (status == null) {
@@ -77,7 +77,7 @@ public class PatientService {
             }
 
             List<AppointmentDTO> appointments = appointmentRepository
-                    .findByPatient_IdAndStatusOrderByAppointmentTimeAsc(id, status)
+                    .findByPatientIdAndStatusOrderByAppointmentTimeAsc(patientId, status)
                     .stream()
                     .map(AppointmentDTO::fromAppointment)
                     .collect(Collectors.toList());
@@ -93,10 +93,10 @@ public class PatientService {
     }
 
     @Transactional(readOnly = true)
-    public ResponseEntity<Map<String, Object>> filterByDoctor(String name, Long patientId) {
+    public ResponseEntity<Map<String, Object>> filterByDoctor(String drName, Long patientId) {
         try {
             List<AppointmentDTO> appointments = appointmentRepository
-                    .filterByDoctorNameAndPatientId(name, patientId)
+                    .filterByDoctorNameAndPatientId(drName, patientId)
                     .stream()
                     .map(AppointmentDTO::fromAppointment)
                     .collect(Collectors.toList());

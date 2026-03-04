@@ -1,5 +1,10 @@
 package com.project.back_end.DTO;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
 public class Login {
     private String identifier;
     private String password;

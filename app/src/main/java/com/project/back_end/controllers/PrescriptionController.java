@@ -1,8 +1,8 @@
 package com.project.back_end.controllers;
 
 import com.project.back_end.models.Prescription;
+import com.project.back_end.services.CommonService;
 import com.project.back_end.services.PrescriptionService;
-import com.project.back_end.services.Service;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -23,14 +23,14 @@ public class PrescriptionController {
     private PrescriptionService prescriptionService;
 
     @Autowired
-    private Service service;
+    private CommonService commonService;
 
     @PostMapping("/{token}")
     public ResponseEntity<Map<String, String>> savePrescription(
             @PathVariable String token,
             @Valid @RequestBody Prescription prescription
     ) {
-        ResponseEntity<Map<String, String>> tokenValidation = service.validateToken(token, "doctor");
+        ResponseEntity<Map<String, String>> tokenValidation = commonService.validateToken(token, "doctor");
         if (tokenValidation != null) {
             return tokenValidation;
         }
@@ -43,7 +43,7 @@ public class PrescriptionController {
             @PathVariable Long appointmentId,
             @PathVariable String token
     ) {
-        ResponseEntity<Map<String, String>> tokenValidation = service.validateToken(token, "doctor");
+        ResponseEntity<Map<String, String>> tokenValidation = commonService.validateToken(token, "doctor");
         if (tokenValidation != null) {
             Map<String, Object> response = new java.util.HashMap<>();
             if (tokenValidation.getBody() != null) {

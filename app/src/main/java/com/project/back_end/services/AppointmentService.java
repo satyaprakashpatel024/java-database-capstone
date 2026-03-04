@@ -23,20 +23,20 @@ public class AppointmentService {
     private final PatientRepository patientRepository;
     private final DoctorRepository doctorRepository;
     private final TokenService tokenService;
-    private final Service service;
+    private final CommonService commonService;
 
     public AppointmentService(
             AppointmentRepository appointmentRepository,
             PatientRepository patientRepository,
             DoctorRepository doctorRepository,
             TokenService tokenService,
-            Service service
+            CommonService commonService
     ) {
         this.appointmentRepository = appointmentRepository;
         this.patientRepository = patientRepository;
         this.doctorRepository = doctorRepository;
         this.tokenService = tokenService;
-        this.service = service;
+        this.commonService = commonService;
     }
 
     @Transactional
@@ -60,7 +60,7 @@ public class AppointmentService {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
             }
 
-            int isValid = service.validateAppointment(
+            int isValid = commonService.validateAppointment(
                     appointment.getDoctor().getId(),
                     appointment.getAppointmentTime()
             );
