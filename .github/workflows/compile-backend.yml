@@ -1,0 +1,28 @@
+name: Compile Backend
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    name: Compile Java 21 with Maven
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Compile with Maven
+        # Runs 'mvn clean compile' inside the app directory
+        run: mvn clean compile
+        working-directory: ./app
