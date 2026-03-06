@@ -1,9 +1,11 @@
 package com.project.back_end.controllers;
 
+import com.project.back_end.DTO.AppConstant;
 import com.project.back_end.DTO.Login;
 import com.project.back_end.models.Doctor;
 import com.project.back_end.services.CommonService;
 import com.project.back_end.services.DoctorService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -21,15 +23,13 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("${api.path}" + "doctor")
 public class DoctorController {
 
-    @Autowired
-    private DoctorService doctorService;
-
-    @Autowired
-    private CommonService commonService;
+    private final DoctorService doctorService;
+    private final CommonService commonService;
 
     @GetMapping("/availability/{user}/{doctorId}/{date}/{token}")
     public ResponseEntity<Map<String, Object>> getDoctorAvailability(
@@ -62,7 +62,7 @@ public class DoctorController {
             @RequestBody Doctor doctor,
             @PathVariable String token
     ) {
-        ResponseEntity<Map<String, String>> tokenValidation = commonService.validateToken(token, "admin");
+        ResponseEntity<Map<String, String>> tokenValidation = commonService.validateToken(token, AppConstant.ADMIN);
         if (tokenValidation != null) {
             return tokenValidation;
         }
@@ -71,15 +71,15 @@ public class DoctorController {
         int result = doctorService.saveDoctor(doctor);
 
         if (result == 1) {
-            response.put("message", "Doctor added to db");
+            response.put(AppConstant.MESSAGE, "Doctor added to db");
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
         }
         if (result == -1) {
-            response.put("message", "Doctor already exists");
+            response.put(AppConstant.MESSAGE, "Doctor already exists");
             return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
         }
 
-        response.put("message", "Some internal error occurred");
+        response.put(AppConstant.MESSAGE, AppConstant.SERVER_ERROR);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
 
@@ -102,15 +102,15 @@ public class DoctorController {
         int result = doctorService.updateDoctor(doctor);
 
         if (result == 1) {
-            response.put("message", "Doctor updated");
+            response.put(AppConstant.MESSAGE, "Doctor updated");
             return ResponseEntity.ok(response);
         }
         if (result == -1) {
-            response.put("message", "Doctor not found");
+            response.put(AppConstant.MESSAGE, "Doctor not found");
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
 
-        response.put("message", "Some internal error occurred");
+        response.put(AppConstant.MESSAGE, AppConstant.SERVER_ERROR);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
 
@@ -128,15 +128,15 @@ public class DoctorController {
         int result = doctorService.deleteDoctor(id);
 
         if (result == 1) {
-            response.put("message", "Doctor deleted successfully");
+            response.put(AppConstant.MESSAGE, "Doctor deleted successfully");
             return ResponseEntity.ok(response);
         }
         if (result == -1) {
-            response.put("message", "Doctor not found with id");
+            response.put(AppConstant.MESSAGE, "Doctor not found with id");
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
 
-        response.put("message", "Some internal error occurred");
+        response.put(AppConstant.MESSAGE, AppConstant.SERVER_ERROR);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
 

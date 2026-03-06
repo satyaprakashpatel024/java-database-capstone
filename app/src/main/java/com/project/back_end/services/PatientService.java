@@ -1,9 +1,11 @@
 package com.project.back_end.services;
 
+import com.project.back_end.DTO.AppConstant;
 import com.project.back_end.DTO.AppointmentDTO;
 import com.project.back_end.models.Patient;
 import com.project.back_end.repo.AppointmentRepository;
 import com.project.back_end.repo.PatientRepository;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -16,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@RequiredArgsConstructor
 @Service
 public class PatientService {
 
@@ -24,14 +27,6 @@ public class PatientService {
     private final PatientRepository patientRepository;
     private final AppointmentRepository appointmentRepository;
     private final TokenService tokenService;
-
-    public PatientService(PatientRepository patientRepository,
-                          AppointmentRepository appointmentRepository,
-                          TokenService tokenService) {
-        this.patientRepository = patientRepository;
-        this.appointmentRepository = appointmentRepository;
-        this.tokenService = tokenService;
-    }
 
     public int createPatient(Patient patient) {
         try {
@@ -56,15 +51,15 @@ public class PatientService {
             List<AppointmentDTO> appointments = appointmentRepository.findByPatientId(id)
                     .stream()
                     .map(AppointmentDTO::fromAppointment)
-                    .collect(Collectors.toList());
+                    .toList();
 
             Map<String, Object> body = new HashMap<>();
-            body.put("appointments", appointments);
-            body.put("message", "Patient appointments fetched successfully");
+            body.put(AppConstant.APPOINTMENTS, appointments);
+            body.put(AppConstant.MESSAGE, "Patient appointments fetched successfully");
             return ResponseEntity.ok(body);
         } catch (Exception e) {
-            logger.error("Failed to fetch patient appointments", e);
-            return response(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to fetch patient appointments");
+            logger.error(AppConstant.PATIENT_ERROR, e);
+            return response(HttpStatus.INTERNAL_SERVER_ERROR, AppConstant.PATIENT_ERROR);
         }
     }
 
@@ -80,11 +75,11 @@ public class PatientService {
                     .findByPatientIdAndStatusOrderByAppointmentTimeAsc(patientId, status)
                     .stream()
                     .map(AppointmentDTO::fromAppointment)
-                    .collect(Collectors.toList());
+                    .toList();
 
             Map<String, Object> body = new HashMap<>();
-            body.put("appointments", appointments);
-            body.put("message", "Appointments filtered by condition successfully");
+            body.put(AppConstant.APPOINTMENTS, appointments);
+            body.put(AppConstant.MESSAGE, "Appointments filtered by condition successfully");
             return ResponseEntity.ok(body);
         } catch (Exception e) {
             logger.error("Failed to filter appointments by condition", e);
@@ -99,11 +94,11 @@ public class PatientService {
                     .filterByDoctorNameAndPatientId(drName, patientId)
                     .stream()
                     .map(AppointmentDTO::fromAppointment)
-                    .collect(Collectors.toList());
+                    .toList();
 
             Map<String, Object> body = new HashMap<>();
-            body.put("appointments", appointments);
-            body.put("message", "Appointments filtered by doctor successfully");
+            body.put(AppConstant.APPOINTMENTS, appointments);
+            body.put(AppConstant.MESSAGE, "Appointments filtered by doctor successfully");
             return ResponseEntity.ok(body);
         } catch (Exception e) {
             logger.error("Failed to filter appointments by doctor", e);
@@ -123,11 +118,11 @@ public class PatientService {
                     .filterByDoctorNameAndPatientIdAndStatus(name, patientId, status)
                     .stream()
                     .map(AppointmentDTO::fromAppointment)
-                    .collect(Collectors.toList());
+                    .toList();
 
             Map<String, Object> body = new HashMap<>();
-            body.put("appointments", appointments);
-            body.put("message", "Appointments filtered by doctor and condition successfully");
+            body.put(AppConstant.APPOINTMENTS, appointments);
+            body.put(AppConstant.MESSAGE, "Appointments filtered by doctor and condition successfully");
             return ResponseEntity.ok(body);
         } catch (Exception e) {
             logger.error("Failed to filter appointments by doctor and condition", e);
@@ -146,7 +141,7 @@ public class PatientService {
 
             Map<String, Object> body = new HashMap<>();
             body.put("patient", patient);
-            body.put("message", "Patient details fetched successfully");
+            body.put(AppConstant.MESSAGE, "Patient details fetched successfully");
             return ResponseEntity.ok(body);
         } catch (Exception e) {
             logger.error("Failed to fetch patient details", e);
@@ -167,7 +162,29 @@ public class PatientService {
 
     private ResponseEntity<Map<String, Object>> response(HttpStatus status, String message) {
         Map<String, Object> body = new HashMap<>();
-        body.put("message", message);
+        body.put(AppConstant.MESSAGE, message);
         return ResponseEntity.status(status).body(body);
+    }
+
+    public ResponseEntity<Map<String, Object>> getPatientAppointments(String email) {
+        Map<String, Object> body = new HashMap<>();
+        try {
+            Patient patient = patientRepository.findByEmail(email);
+            if (patient == null) {
+                return response(HttpStatus.NOT_FOUND, "Patient not found");
+            }
+
+            List<AppointmentDTO> appointments = appointmentRepository.findByPatientId(patient.getId())
+                    .stream()
+                    .map(AppointmentDTO::fromAppointment)
+                    .toList();
+
+            body.put(AppConstant.APPOINTMENTS, appointments);
+            body.put(AppConstant.MESSAGE, "Patient appointments fetched successfully");
+            return ResponseEntity.ok(body);
+        } catch (Exception e) {
+            logger.error("Failed to fetch patient appointments", e);
+            return response(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to fetch patient appointments");
+        }
     }
 }

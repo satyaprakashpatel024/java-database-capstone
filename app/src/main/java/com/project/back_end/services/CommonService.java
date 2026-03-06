@@ -1,5 +1,6 @@
 package com.project.back_end.services;
 
+import com.project.back_end.DTO.AppConstant;
 import com.project.back_end.DTO.Login;
 import com.project.back_end.models.Admin;
 import com.project.back_end.models.Appointment;
@@ -8,6 +9,7 @@ import com.project.back_end.models.Patient;
 import com.project.back_end.repo.AdminRepository;
 import com.project.back_end.repo.DoctorRepository;
 import com.project.back_end.repo.PatientRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -20,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+@RequiredArgsConstructor
 @Service
 public class CommonService {
 
@@ -30,54 +33,29 @@ public class CommonService {
     private final DoctorService doctorService;
     private final PatientService patientService;
 
-    public CommonService(
-            TokenService tokenService,
-            AdminRepository adminRepository,
-            DoctorRepository doctorRepository,
-            PatientRepository patientRepository,
-            DoctorService doctorService,
-            PatientService patientService
-    ) {
-        this.tokenService = tokenService;
-        this.adminRepository = adminRepository;
-        this.doctorRepository = doctorRepository;
-        this.patientRepository = patientRepository;
-        this.doctorService = doctorService;
-        this.patientService = patientService;
-    }
 
     public ResponseEntity<Map<String, String>> validateToken(String token, String user) {
         Map<String, String> response = new HashMap<>();
         if (!tokenService.validateToken(token, user)) {
-            response.put("message", "Invalid or expired token");
+            response.put(AppConstant.MESSAGE, "Invalid or expired token");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
         }
         return null;
     }
-
-//    public ResponseEntity<Map<String, String>> validateToken(String token, String user) {
-//        Map<String, String> response = new HashMap<>();
-//        if (!tokenService.validateToken(token, user)) {
-//            response.put("message", "Invalid or expired token");
-//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-//        }
-//        response.put("message", "Token valid");
-//        return ResponseEntity.ok(response);  // Return success instead of null
-//    }
 
     public ResponseEntity<Map<String, String>> validateAdmin(Admin receivedAdmin) {
         Map<String, String> response = new HashMap<>();
         try {
             Admin storedAdmin = adminRepository.findByUsername(receivedAdmin.getUsername());
             if (storedAdmin == null || !storedAdmin.getPassword().equals(receivedAdmin.getPassword())) {
-                response.put("message", "Invalid username or password");
+                response.put(AppConstant.MESSAGE, "Invalid username or password");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
             }
 
             response.put("token", tokenService.generateToken(storedAdmin.getUsername()));
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            response.put("message", "An error occurred while validating admin");
+            response.put(AppConstant.MESSAGE, "An error occurred while validating admin");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
@@ -141,14 +119,14 @@ public class CommonService {
         try {
             Patient patient = patientRepository.findByEmail(login.getIdentifier());
             if (patient == null || !patient.getPassword().equals(login.getPassword())) {
-                response.put("message", "Invalid email or password");
+                response.put(AppConstant.MESSAGE, "Invalid email or password");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
             }
 
             response.put("token", tokenService.generateToken(patient.getEmail()));
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            response.put("message", "An error occurred while validating patient login");
+            response.put(AppConstant.MESSAGE, "An error occurred while validating patient login");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
@@ -158,20 +136,14 @@ public class CommonService {
         try {
             String email = tokenService.extractEmail(token);
             boolean hasCondition = condition != null && !condition.isBlank();
-
-            Map<String, Object> appointments = null;
+            Patient patient = patientRepository.findByEmail(email);
             if (hasCondition) {
-//                appointments = patientService.filterByDoctorAndCondition(condition,email, patientId);
-            } else if (hasCondition) {
-//                appointments = patientService.filterByCondition( condition,patientId);
+                return patientService.filterByCondition(condition, patient.getId());
             } else {
-//                appointments = patientService.getPatientAppointments(email);
+                return patientService.getPatientAppointments(email);
             }
-
-            response.put("appointments", appointments);
-            return ResponseEntity.ok(response);
         } catch (Exception e) {
-            response.put("message", "An error occurred while filtering patient appointments");
+            response.put(AppConstant.MESSAGE, "An error occurred while filtering patient appointments");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
@@ -185,7 +157,6 @@ public class CommonService {
             return -1;
         }
         List<String> doctorAvailability = doctorService.getDoctorAvailability(doctorId, appointmentDateTime.toLocalDate());
-        LocalTime time = appointmentDateTime.toLocalTime();
         LocalTime appointmentTime = appointmentDateTime.toLocalTime();
 
         boolean isAvailable = doctorAvailability.stream()

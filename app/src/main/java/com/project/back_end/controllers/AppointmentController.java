@@ -1,9 +1,10 @@
 package com.project.back_end.controllers;
 
+import com.project.back_end.DTO.AppConstant;
 import com.project.back_end.models.Appointment;
 import com.project.back_end.services.AppointmentService;
 import com.project.back_end.services.CommonService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -19,19 +20,17 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/appointments")
 public class AppointmentController {
 
-    @Autowired
-    private AppointmentService appointmentService;
-
-    @Autowired
-    private CommonService commonService;
+    private final AppointmentService appointmentService;
+    private final CommonService commonService;
 
     @GetMapping("/{date}/{patientName}/{token}")
     public ResponseEntity<Map<String, Object>> getAppointments(@PathVariable LocalDate date, @PathVariable String patientName, @PathVariable String token) {
-        ResponseEntity<Map<String, String>> tokenValidation = commonService.validateToken(token, "doctor");
+        ResponseEntity<Map<String, String>> tokenValidation = commonService.validateToken(token, AppConstant.DOCTOR);
         if (tokenValidation != null) {
             Map<String, Object> response = new HashMap<>();
             response.putAll(tokenValidation.getBody());
@@ -42,7 +41,7 @@ public class AppointmentController {
 
     @PostMapping("/{token}")
     public ResponseEntity<Map<String, String>> bookAppointment(@PathVariable String token, @RequestBody Appointment appointment) {
-        ResponseEntity<Map<String, String>> tokenValidation = commonService.validateToken(token, "patient");
+        ResponseEntity<Map<String, String>> tokenValidation = commonService.validateToken(token, AppConstant.PATIENT);
         if (tokenValidation != null) {
             return tokenValidation;
         }
@@ -51,27 +50,27 @@ public class AppointmentController {
         Map<String, String> response = new HashMap<>();
 
         if (appointmentValidation == -1) {
-            response.put("message", "Invalid doctor id");
+            response.put(AppConstant.MESSAGE, "Invalid doctor id");
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
 
         if (appointmentValidation == 0) {
-            response.put("message", "Appointment time is already booked or unavailable");
+            response.put(AppConstant.MESSAGE, "Appointment time is already booked or unavailable");
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
 
         int result = appointmentService.bookAppointment(appointment);
         if (result == 1) {
-            response.put("message", "Appointment booked successfully");
+            response.put(AppConstant.MESSAGE, "Appointment booked successfully");
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
         }
-        response.put("message", "Failed to book appointment");
+        response.put(AppConstant.MESSAGE, "Failed to book appointment");
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
 
     @PutMapping("/{token}")
     public ResponseEntity<Map<String, String>> updateAppointment(@PathVariable String token, @RequestBody Appointment appointment) {
-        ResponseEntity<Map<String, String>> tokenValidation = commonService.validateToken(token, "patient");
+        ResponseEntity<Map<String, String>> tokenValidation = commonService.validateToken(token, AppConstant.PATIENT);
         if (tokenValidation != null) {
             return tokenValidation;
         }
@@ -80,7 +79,7 @@ public class AppointmentController {
 
     @DeleteMapping("/{id}/{token}")
     public ResponseEntity<Map<String, String>> cancelAppointment(@PathVariable long id, @PathVariable String token) {
-        ResponseEntity<Map<String, String>> tokenValidation = commonService.validateToken(token, "patient");
+        ResponseEntity<Map<String, String>> tokenValidation = commonService.validateToken(token, AppConstant.PATIENT);
         if (tokenValidation != null) {
             return tokenValidation;
         }

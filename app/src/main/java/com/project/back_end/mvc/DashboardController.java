@@ -3,17 +3,18 @@ package com.project.back_end.mvc;
 import com.project.back_end.services.CommonService;
 
 import java.util.Map;
-import org.springframework.beans.factory.annotation.Autowired;
+
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
+@RequiredArgsConstructor
 @Controller
 public class DashboardController {
 
-    @Autowired
-    private CommonService commonService;
+    private final CommonService commonService;
 
     @GetMapping("/adminDashboard/{token}")
     public String adminDashboard(@PathVariable String token) {

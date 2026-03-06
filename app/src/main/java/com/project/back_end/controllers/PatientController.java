@@ -1,10 +1,11 @@
 package com.project.back_end.controllers;
 
+import com.project.back_end.DTO.AppConstant;
 import com.project.back_end.DTO.Login;
 import com.project.back_end.models.Patient;
 import com.project.back_end.services.PatientService;
 import com.project.back_end.services.CommonService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -18,19 +19,17 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.HashMap;
 import java.util.Map;
 
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/patient")
 public class PatientController {
 
-    @Autowired
-    private PatientService patientService;
-
-    @Autowired
-    private CommonService commonService;
+    private final PatientService patientService;
+    private final CommonService commonService;
 
     @GetMapping("/{token}")
     public ResponseEntity<Map<String, Object>> getPatient(@PathVariable String token) {
-        ResponseEntity<Map<String, String>> tokenValidation = commonService.validateToken(token, "patient");
+        ResponseEntity<Map<String, String>> tokenValidation = commonService.validateToken(token, AppConstant.PATIENT);
         if (tokenValidation != null) {
             Map<String, Object> response = new HashMap<>();
             response.putAll(tokenValidation.getBody());
@@ -46,17 +45,17 @@ public class PatientController {
 
         boolean isValid = commonService.validatePatient(patient);
         if (!isValid) {
-            response.put("message", "Patient with email id or phone no already exist");
+            response.put(AppConstant.MESSAGE, "Patient with email id or phone no already exist");
             return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
         }
 
         int result = patientService.createPatient(patient);
         if (result == 1) {
-            response.put("message", "Signup successful");
+            response.put(AppConstant.MESSAGE, "Signup successful");
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
         }
 
-        response.put("message", "Internal server error");
+        response.put(AppConstant.MESSAGE, "Internal server error");
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
 
@@ -70,7 +69,7 @@ public class PatientController {
             @PathVariable Long id,
             @PathVariable String token
     ) {
-        ResponseEntity<Map<String, String>> tokenValidation = commonService.validateToken(token, "patient");
+        ResponseEntity<Map<String, String>> tokenValidation = commonService.validateToken(token, AppConstant.PATIENT);
         if (tokenValidation != null) {
             Map<String, Object> response = new HashMap<>();
             response.putAll(tokenValidation.getBody());
@@ -86,13 +85,12 @@ public class PatientController {
             @PathVariable String name,
             @PathVariable String token
     ) {
-        ResponseEntity<Map<String, String>> tokenValidation = commonService.validateToken(token, "patient");
+        ResponseEntity<Map<String, String>> tokenValidation = commonService.validateToken(token, AppConstant.PATIENT);
         if (tokenValidation != null) {
             Map<String, Object> response = new HashMap<>();
             response.putAll(tokenValidation.getBody());
             return ResponseEntity.status(tokenValidation.getStatusCode()).body(response);
         }
-
         return commonService.filterPatient(condition, name, token);
     }
 }

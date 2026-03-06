@@ -1,10 +1,12 @@
 package com.project.back_end.services;
 
+import com.project.back_end.DTO.AppConstant;
 import com.project.back_end.DTO.Login;
 import com.project.back_end.models.Appointment;
 import com.project.back_end.models.Doctor;
 import com.project.back_end.repo.AppointmentRepository;
 import com.project.back_end.repo.DoctorRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -17,8 +19,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
+@RequiredArgsConstructor
 @Service
 public class DoctorService {
 
@@ -26,24 +28,12 @@ public class DoctorService {
     private final AppointmentRepository appointmentRepository;
     private final TokenService tokenService;
 
-    public DoctorService(
-            DoctorRepository doctorRepository,
-            AppointmentRepository appointmentRepository,
-            TokenService tokenService
-    ) {
-        this.doctorRepository = doctorRepository;
-        this.appointmentRepository = appointmentRepository;
-        this.tokenService = tokenService;
-    }
-
     @Transactional
     public List<String> getDoctorAvailability(Long doctorId, LocalDate date) {
         Doctor doctor = doctorRepository.findById(doctorId).orElse(null);
         if (doctor == null || doctor.getAvailableTimes() == null) {
             return List.of();
         }
-
-        System.out.println("Doctor ID: " + doctor);
 
         LocalDateTime start = date.atStartOfDay();
         LocalDateTime end = date.plusDays(1).atStartOfDay();
@@ -106,21 +96,19 @@ public class DoctorService {
 
     public ResponseEntity<Map<String, String>> validateDoctor(Login login) {
         Map<String, String> response = new HashMap<>();
-        System.out.println("Login attempt: " + login.getIdentifier() + ", password: " + login.getPassword());
         try {
             Doctor doctor = doctorRepository.findByEmail(login.getIdentifier());
-            System.out.println("Doctor found: " + doctor.getEmail()+", password: "+doctor.getPassword());
             if (doctor == null || !doctor.getPassword().equals(login.getPassword())) {
-                response.put("message", "Invalid email or password");
+                response.put(AppConstant.MESSAGE, "Invalid email or password");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
             }
 
             String token = tokenService.generateToken(doctor.getEmail());
-            response.put("message", "Login successful");
+            response.put(AppConstant.MESSAGE, "Login successful");
             response.put("token", token);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            response.put("message", "Internal server error");
+            response.put(AppConstant.MESSAGE, "Internal server error");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
@@ -195,6 +183,6 @@ public class DoctorService {
                     }
                     return isAmFilter == parsedTime.isBefore(LocalTime.NOON);
                 }))
-                .collect(Collectors.toList());
+                .toList();
     }
 }

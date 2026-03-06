@@ -1,5 +1,6 @@
 package com.project.back_end.services;
 
+import com.project.back_end.DTO.AppConstant;
 import com.project.back_end.models.Appointment;
 import com.project.back_end.models.Patient;
 import com.project.back_end.repo.AppointmentRepository;
@@ -56,7 +57,7 @@ public class AppointmentService {
         try {
             Optional<Appointment> existingAppointment = appointmentRepository.findById(appointment.getId());
             if (existingAppointment.isEmpty()) {
-                response.put("message", "Appointment not found");
+                response.put(AppConstant.MESSAGE, "Appointment not found");
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
             }
 
@@ -66,21 +67,21 @@ public class AppointmentService {
             );
 
             if (isValid == -1) {
-                response.put("message", "Invalid doctor id");
+                response.put(AppConstant.MESSAGE, "Invalid doctor id");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
             }
 
             if (isValid == 0) {
-                response.put("message", "Appointment time is already booked or unavailable");
+                response.put(AppConstant.MESSAGE, "Appointment time is already booked or unavailable");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
             }
 
             appointmentRepository.save(appointment);
-            response.put("message", "Appointment updated successfully");
+            response.put(AppConstant.MESSAGE, "Appointment updated successfully");
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            response.put("message", "Failed to update appointment");
+            response.put(AppConstant.MESSAGE, "Failed to update appointment");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
@@ -92,7 +93,7 @@ public class AppointmentService {
         try {
             Optional<Appointment> appointmentOptional = appointmentRepository.findById(id);
             if (appointmentOptional.isEmpty()) {
-                response.put("message", "Appointment not found");
+                response.put(AppConstant.MESSAGE, "Appointment not found");
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
             }
 
@@ -100,22 +101,22 @@ public class AppointmentService {
             Patient patient = patientRepository.findByEmail(email);
 
             if (patient == null) {
-                response.put("message", "Patient not found");
+                response.put(AppConstant.MESSAGE, "Patient not found");
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
             }
 
             Appointment appointment = appointmentOptional.get();
             if (!appointment.getPatient().getId().equals(patient.getId())) {
-                response.put("message", "Unauthorized to cancel this appointment");
+                response.put(AppConstant.MESSAGE, "Unauthorized to cancel this appointment");
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
             }
 
             appointmentRepository.delete(appointment);
-            response.put("message", "Appointment cancelled successfully");
+            response.put(AppConstant.MESSAGE, "Appointment cancelled successfully");
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            response.put("message", "Failed to cancel appointment");
+            response.put(AppConstant.MESSAGE, "Failed to cancel appointment");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
@@ -148,7 +149,7 @@ public class AppointmentService {
             return response;
         } catch (Exception e) {
             response.put("appointments", List.of());
-            response.put("message", "Failed to retrieve appointments");
+            response.put(AppConstant.MESSAGE, "Failed to retrieve appointments");
             return response;
         }
     }
